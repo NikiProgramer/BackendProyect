@@ -1,6 +1,14 @@
 const express = require('express')
 const mysql = require('mysql2');
+const cors = require('cors');
 const app = express()
+
+// Habilitar CORS
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
+
 app.use(express.json())
 const port = 3000
 
@@ -14,15 +22,20 @@ const pool = mysql.createPool({
 
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body
-  const [rows] = await pool.promise()
-    .query('SELECT `id`, `email`, `password`' +
-      ' FROM `usuarios` WHERE email = ? AND password = ?',
-      [email, password]);
-  if (rows.length > 0) {
-    res.send('Usuario logueado con Exito')
-  } else {
-    res.send('Credenciales incorrectas')
+  try {
+    const { email, password } = req.body
+    const [rows] = await pool.promise()
+      .query('SELECT `id`, `email`, `password`' +
+        ' FROM `usuarios` WHERE email = ? AND password = ?',
+        [email, password]);
+    if (rows.length > 0) {
+      res.send('Usuario logueado con Exito')
+    } else {
+      res.status(401).send('Credenciales incorrectas')
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('Error al conectar con la base de datos')
   }
 })
 
